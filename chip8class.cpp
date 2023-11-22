@@ -1,4 +1,6 @@
 #include "chip8class.h"
+#include <random>
+#include <iostream>
 using namespace std;
 
 
@@ -137,6 +139,88 @@ void Chip8::emulate_codes(){
                 break;
             case 0xA000:
                 index_register = (opcode & 0x0FFF);
-                
+                program_counter += 2;
+                break;
+            case 0xB000:
+                program_counter = mem_register[0] + (opcode & 0x0FFF);
+                break;
+            case 0xC000:
+                mem_register[(opcode & 0x0F00) >> 8] = (rand() % (0xFF + 1)) & (opcode & 0x00FF);
+                program_counter += 2;
+                break;
+            case 0xD000:
+                cout << "fix me please" << endl;
+            case 0xE000:
+                switch(opcode & 0x00F0){
+                    case 0x0090:
+                        if (keypad[mem_register[(opcode & 0x0F00)>>8]] != 0){
+                            program_counter+=2;
+                        }
+                        program_counter += 2;
+                        break;
+                    case 0x00A0:
+                        if (keypad[mem_register[(opcode & 0x0F00)>>8]] == 0){
+                            program_counter+=2;
+                        }
+                        program_counter += 2;
+                        break;
+                }
+            case 0xF000:
+                switch(opcode & 0x00FF){
+                    case 0x0007:
+                        mem_register[(opcode & 0x0F00)>>8] = delay_timer;
+                        program_counter+=2;
+                        break;
+                    case 0x000A:
+                        for(int i = 0; i < 16; ++i){
+                            if(keypad[i] != 0){
+                                mem_register[(opcode & 0x0F00) >> 8] = i;
+                                program_counter += 2;
+                                break;                        
+                            }
+                        }
+                    case 0x0015:
+                        delay_timer = mem_register[(opcode & 0x0F00) >> 8];
+                        program_counter+=2;
+                        break; 
+                    case 0x0018:
+                        sound_timer = mem_register[(opcode & 0x0F00) >> 8];
+                        program_counter+=2;
+                        break;
+                    case 0x001E:
+                        index_register += mem_register[(opcode & 0x0F00) >> 8];
+                        program_counter+=2;
+                        break;                        
+                    case 0x0029:
+                        index_register = mem_register[(opcode & 0x0F00) >> 8]* 0x5;
+                        program_counter+=2;
+                        break;
+
+                    case 0x0033:
+                        memory[index_register]     = mem_register[(opcode & 0x0F00) >> 8] / 100;
+                        memory[index_register + 1] = (mem_register[(opcode & 0x0F00) >> 8] / 10) % 10;
+                        memory[index_register + 2] = mem_register[(opcode & 0x0F00) >> 8] % 10;
+                        program_counter += 2;
+                        break;
+                    case 0x0055:
+                        for (int i = 0; i <= ((opcode & 0x0F00) >> 8); ++i){
+                            memory[index_register+i] = mem_register[i];
+                        }
+                        index_register = index_register + opcode&0x0F00 +1;
+                        program_counter+=2;
+                        break;
+                    case 0x0065:
+                        for (int i = 0; i <= ((opcode & 0x0F00) >> 8); ++i){
+                            mem_register[i] = memory[index_register + i];
+                        }
+                        index_register = index_register + opcode&0x0F00 +1;
+                        program_counter+=2;
+                        break;
+
+                }
+            
+
+
     }
 };
+
